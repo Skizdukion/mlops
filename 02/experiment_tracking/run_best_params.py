@@ -4,7 +4,7 @@ from sklearn.feature_extraction import DictVectorizer
 import mlflow
 from sklearn.metrics import root_mean_squared_error
 
-mlflow.set_tracking_uri("sqlite:///mlflow.db")
+mlflow.set_tracking_uri("http://127.0.0.1:5000")
 mlflow.set_experiment("nyc-duration-experiment")
 
 def read_dataframe(filename):
@@ -60,18 +60,6 @@ best_params = {
     'seed': 42
 }
 
-# mlflow.autolog()
-with mlflow.start_run():
-    mlflow.set_tag("developer", "luca")
-    mlflow.set_tag("model", "xgboost")
+mlflow.xgboost.autolog()
 
-    mlflow.log_params(best_params)
-
-    booster = xgb.train(params=best_params, dtrain=train,num_boost_round=1000,evals=[(valid, "validation")], early_stopping_rounds=50)
-
-    y_pred = booster.predict(valid)
-    rmse = root_mean_squared_error(y_val, y_pred)
-    mlflow.log_metric("rmse", rmse)
-
-# with mlflow.start_run():
-#     booster = xgb.train(params=best_params, dtrain=train,num_boost_round=1000,evals=[(valid, "validation")], early_stopping_rounds=50)
+booster = xgb.train(params=best_params, dtrain=train,num_boost_round=1000,evals=[(valid, "validation")], early_stopping_rounds=50)
