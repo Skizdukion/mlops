@@ -1,0 +1,83 @@
+
+null_count	unique_count
+Id	0	1460
+MSSubClass	0	15 Cat col, no null, meaningful data, 15 unique values, simple one hot encode, really high correlation
+MSZoning	0	5 Cat col, no null, meaningful data, 5 unique values, simple one hot encode, really high correlation
+LotFrontage	259	110 Continuous col, 259 null, meaningful data, 0.3518 correlation. Could use linear regression base on LotArea + MSSubClass + MSZoning + Street + LotShape
+LotArea	0	1073 Corr 0.2638
+Street	0	2 Good
+Alley	1369	2 Categories, N/A as different category
+LotShape	0	4 
+LandContour	0	4
+Utilities	0	2
+LotConfig	0	5
+LandSlope	0	3
+Neighborhood	0	25
+Condition1	0	9
+Condition2	0	8
+BldgType	0	5
+HouseStyle	0	8
+OverallQual	0	10
+OverallCond	0	9
+YearBuilt	0	112
+YearRemodAdd	0	61
+RoofStyle	0	6
+RoofMatl	0	8
+Exterior1st	0	15
+Exterior2nd	0	16
+MasVnrType	872	3 4 cat 827 is treat as none
+MasVnrArea	8	327
+ExterQual	0	4
+ExterCond	0	5
+Foundation	0	6
+BsmtQual	37	4 n/a as category
+BsmtCond	37	4 n/a as category
+BsmtExposure	38	4 n/a as category
+BsmtFinType1	37	6 n/a as category
+BsmtFinSF1	0	637
+BsmtFinType2	38	6 n/a as category
+BsmtFinSF2	0	144
+BsmtUnfSF	0	780
+TotalBsmtSF	0	721
+Heating	0	6
+HeatingQC	0	5
+CentralAir	0	2
+Electrical	1	5 Fill n/a with mode
+1stFlrSF	0	753
+2ndFlrSF	0	417
+LowQualFinSF	0	24
+GrLivArea	0	861
+BsmtFullBath	0	4
+BsmtHalfBath	0	3
+FullBath	0	4
+HalfBath	0	3
+BedroomAbvGr	0	8
+KitchenAbvGr	0	4
+KitchenQual	0	4
+TotRmsAbvGrd	0	12
+Functional	0	7
+Fireplaces	0	4
+FireplaceQu	690	5 n/a as category
+GarageType	81	6 n/a as category
+GarageYrBlt	81	97 continuesous, use median to fill null
+GarageFinish 81	3 
+GarageCars	0	5
+GarageArea	0	441
+GarageQual	81	5 n/a as category
+GarageCond	81	5 n/a as category
+PavedDrive	0	3
+WoodDeckSF	0	274
+OpenPorchSF	0	202
+EnclosedPorch	0	120
+3SsnPorch	0	20
+ScreenPorch	0	76
+PoolArea	0	8
+PoolQC	1453	3 n/a as category
+Fence	1179	4 n/a as category
+MiscFeature	1406	4 n/a as category
+MiscVal	0	21
+MoSold	0	12
+YrSold	0	5
+SaleType	0	9
+SaleCondition	0	6
+SalePrice	0	663
