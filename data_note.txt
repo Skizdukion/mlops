@@ -81,3 +81,19 @@ YrSold	0	5
 SaleType	0	9
 SaleCondition	0	6
 SalePrice	0	663
+
+SalePrice vs LotFrontage ( 4 anomoly )
+SalePrice vs LotArea ( 4 anomoly )
+SalePrice vs YearBuilt ( 2 anomoly )
+SalePrice vs YearRemodAdd ( 2 anomoly )
+SalePrice vs MasVnrArea ( 3 anomoly )
+SalePrice vs BsmtFinSF1 ( 3 anomoly )
+SalePrice vs TotalBsmtSF ( 1 anomoly )
+SalePrice vs 1stFlrSF ( 1 anomoly )
+SalePrice vs 2stFlrSF ( 1 anomoly )
+SalePrice vs LowQualFinSF ( 1 anomoly )
+SalePrice vs GrLivArea ( 4 anomoly )
+SalePrice vs FullBath ( 4 anomoly )
+SalePrice vs GarageYrBlt ( 2 anomoly )
+
+1182, 691, 898

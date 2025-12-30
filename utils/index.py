@@ -41,6 +41,25 @@ numeric_cols = [
     "3SsnPorch",
     "ScreenPorch",
     "PoolArea",
+    "MasVnrArea"
+]
+
+outliers = [
+    1182,
+    691,
+    898,
+    803,
+    1046,
+    1169,
+    440,
+    769,
+    178,
+    798,
+    185,
+    1373,
+    1298,
+    1243,
+    1268,
 ]
 
 
@@ -277,6 +296,13 @@ def prep_test_data(df, train_params):
 
 
 def prep_house_price_train_data(df):
+
+    # outliers = df[(df["GrLivArea"] > 4000) & (df["SalePrice"] < 300000)].index
+    # df = df.drop(outliers).reset_index(drop=True)
+    # print(f"Dropped {len(outliers)} outliers based on GrLivArea vs SalePrice.")
+
+    df = df.drop(outliers).reset_index(drop=True)
+
     df = fill_categorical_nulls(
         df,
         cat_col_to_fill,
