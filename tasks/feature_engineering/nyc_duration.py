@@ -6,13 +6,70 @@ from tasks.feature_engineering.feature_transformer import (
     OutlierClipper,
     ValueClipper,
     SkewnessTransformer,
+    OneHotEncoderTransformer,
 )
 
 
-class NycDataEngineer(FeatureEngineer):
+class BaseNycFeature(FeatureEngineer):
+    def _apply_domain_logic(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Shared NYC logic used by ALL models"""
+        if "pulocationid" in df.columns and "dolocationid" in df.columns:
+            df["pu_do"] = (
+                df["pulocationid"].astype(str) + "_" + df["dolocationid"].astype(str)
+            )
+
+        # 2. Target Engineering (Only runs if dropoff time is present - i.e., Training)
+        # In Production, we won't have the dropoff time yet!
+        if (
+            "tpep_dropoff_datetime" in df.columns
+            and "tpep_pickup_datetime" in df.columns
+        ):
+            df["duration"] = (
+                df["tpep_dropoff_datetime"] - df["tpep_pickup_datetime"]
+            ).dt.total_seconds() / 60
+        else:
+            # Optional: Log that we are in 'Inference Mode'
+            pass
+
+        return df
+
+    def fit(self, df: pd.DataFrame):
+        return super().fit(self._apply_domain_logic(df))
+
+    def transform(self, df: pd.DataFrame):
+        return super().transform(self._apply_domain_logic(df))
+
+
+class NycTreeDataFeature(BaseNycFeature):
     def __init__(self):
         transformers = [
-            NumericalMedianFiller(colums=["passenger_count"]),
+            NumericalMedianFiller(columns=["passenger_count"]),
+            DatePartTransformer(columns=["tpep_pickup_datetime"]),
+            OutlierClipper(columns=["duration"]),
+            ValueClipper(limits={"duration": (0, None)}),
+            SkewnessTransformer(
+                columns=[
+                    "passenger_count",
+                    "trip_distance",
+                    "fare_amount",
+                    "extra",
+                    "mta_tax",
+                    "tip_amount",
+                    "tolls_amount",
+                    "improvement_surcharge",
+                    "total_amount",
+                ],
+                method="log",
+            ),
+            OneHotEncoderTransformer(columns=["pu_do"]),
+        ]
+        super().__init__(transformers=transformers)
+
+
+class NycCatBoostFeature(BaseNycFeature):
+    def __init__(self):
+        transformers = [
+            NumericalMedianFiller(columns=["passenger_count"]),
             DatePartTransformer(columns=["tpep_pickup_datetime"]),
             OutlierClipper(columns=["duration"]),
             ValueClipper(limits={"duration": (0, None)}),
@@ -32,31 +89,3 @@ class NycDataEngineer(FeatureEngineer):
             ),
         ]
         super().__init__(transformers=transformers)
-
-    def fit(self, df: pd.DataFrame):
-        """
-        Sequentially fits all transformers on the training data.
-        Note: We use a copy to avoid side effects during the fit phase.
-        """
-        temp_df = df.copy()
-        temp_df = self.pu_do(temp_df)
-        temp_df = self.extract_duration(temp_df)
-        return super(temp_df)
-
-    def extract_pu_do(self, df: pd.DataFrame):
-        df_copy = df.copy()
-        df_copy["pu_do"] = (
-            df_copy["pulocationid"].astype(str)
-            + "_"
-            + df_copy["dolocationid"].astype(str)
-        )
-
-        return df_copy
-
-    def extract_duration(self, df: pd.DataFrame):
-        df_copy = df.copy()
-        df_copy["duration"] = (
-            df_copy["tpep_dropoff_datetime"] - df_copy["tpep_pickup_datetime"]
-        ).dt.total_seconds() / 60
-
-        return df_copy
