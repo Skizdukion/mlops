@@ -1,0 +1,33 @@
+NYC_RAW_SCHEMA_VALIDATION = {
+    "vendorid": "int32",
+    "trip_distance": "float64",
+    "tpep_pickup_datetime": "datetime64[us]",
+    "tpep_dropoff_datetime": "datetime64[us]",
+    "passenger_count": "float64",
+    "pulocationid": "int32",
+    "dolocationid": "int32",
+    "fare_amount": "float64",
+    "extra": "float64",
+    "mta_tax": "float64",
+    "tip_amount": "float64",
+    "tolls_amount": "float64",
+    "total_amount": "float64",
+    "improvement_surcharge": "float64",
+}
+
+NYC_SCHEMA_VALIDATION = {
+    "vendorid": "int32",
+    "passenger_count": "float64",
+    "trip_distance": "float64",
+    "fare_amount": "float64",
+    "extra": "float64",
+    "mta_tax": "float64",
+    "tip_amount": "float64",
+    "tolls_amount": "float64",
+    "improvement_surcharge": "float64",
+    "total_amount": "float64",
+    "hour": "int32",
+    "dayofweek": "int32",
+    "is_weekend": "int64",
+    "pu_do": "object",
+}
