@@ -5,6 +5,7 @@ from sklearn.linear_model import ElasticNet
 from xgboost import XGBRegressor
 from tasks.training.base_model import BaseModelTrainer
 
+
 class NYCXGBTrainer(BaseModelTrainer):
     def init_model(self) -> XGBRegressor:
         # Default params if none provided
@@ -20,15 +21,16 @@ class NYCXGBTrainer(BaseModelTrainer):
         # You can pass eval_set via kwargs in your orchestration task
         self.model.fit(X_train, y_train, **kwargs)
 
+
 class NYCCatBoostTrainer(BaseModelTrainer):
     def init_model(self) -> CatBoostRegressor:
         params = self.model_params or {
-            "iterations": 300,
+            "iterations": 500,
             "learning_rate": 0.05,
-            "depth": 8,
+            "depth": 6,
             "loss_function": "RMSE",
             "random_seed": 42,
-            "verbose": 100,
+            "verbose": 200,
             "task_type": "GPU",  # Enable GPU training
             "devices": "0",  # Use the first GPU
             "border_count": 32,  # Optimize for GPU speed
@@ -37,8 +39,15 @@ class NYCCatBoostTrainer(BaseModelTrainer):
 
     def train(self, X_train: pd.DataFrame, y_train: pd.Series, **kwargs):
         self.logger.info("Fitting Catboost model...")
-        # You can pass eval_set via kwargs in your orchestration task
-        self.model.fit(X_train, y_train, **kwargs)
+
+        # Identify categorical columns (object dtype)
+        cat_features = X_train.select_dtypes(include=["object"]).columns.tolist()
+        if cat_features:
+            self.logger.info(f"Categorical features detected: {cat_features}")
+
+        # Pass categorical features to CatBoost
+        self.model.fit(X_train, y_train, cat_features=cat_features, **kwargs)
+
 
 class NYCRandomForestTrainer(BaseModelTrainer):
     def init_model(self) -> RandomForestRegressor:

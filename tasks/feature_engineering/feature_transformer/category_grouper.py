@@ -22,11 +22,10 @@ class CategoricalGrouper(FeatureTransformer):
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Replace rare categories with the placeholder."""
-        df_copy = df.copy()
         for col, frequent_set in self.frequent_categories_.items():
-            if col in df_copy.columns:
+            if col in df.columns:
                 # If value is not in frequent_set, change it to placeholder
-                df_copy[col] = df_copy[col].apply(
+                df[col] = df[col].apply(
                     lambda x: x if x in frequent_set else self.placeholder
                 )
-        return df_copy
+        return df

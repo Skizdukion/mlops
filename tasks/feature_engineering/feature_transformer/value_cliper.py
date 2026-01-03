@@ -1,6 +1,7 @@
 import pandas as pd
 from tasks.feature_engineering.feature_transformer.base_model import FeatureTransformer
 
+
 class ValueClipper(FeatureTransformer):
     def __init__(self, limits: dict[str, tuple[float | None, float | None]]):
         """
@@ -14,9 +15,8 @@ class ValueClipper(FeatureTransformer):
         return self  # Stateless
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        df_copy = df.copy()
         for col, (min_val, max_val) in self.limits.items():
-            if col in df_copy.columns:
+            if col in df.columns:
                 # clip() accepts None for lower/upper to mean "no limit"
-                df_copy[col] = df_copy[col].clip(lower=min_val, upper=max_val)
-        return df_copy
+                df[col] = df[col].clip(lower=min_val, upper=max_val)
+        return df

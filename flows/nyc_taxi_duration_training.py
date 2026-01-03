@@ -1,19 +1,19 @@
-from typing import Type
 import pandas as pd
 from prefect import flow, task, get_run_logger
-
-# Import your custom modules
-from tasks.data_loading import nyc_data_loading
 from tasks.evaluation.nyc_duration import NYCDurationEvaluator
 from tasks.feature_engineering.nyc_duration import (
     NycCatBoostFeature,
     NycTreeDataFeature,
 )
 from tasks.model_registry.base_model import MLflowModelRegistry
-from tasks.training.base_model import BaseModelTrainer
 from tasks.training.nyc_duration import NYCCatBoostTrainer, NYCXGBTrainer
 from tasks.validation.base_model import DataFrameValidation
-from tasks.validation.constant import NYC_RAW_SCHEMA_VALIDATION
+from tasks.validation.constant import (
+    NYC_RAW_SCHEMA_VALIDATION,
+    NYC_SCHEMA_VALIDATION_FOR_CATBOOST,
+    NYC_SCHEMA_VALIDATION_FOR_TREE,
+)
+from tasks.data_loading import nyc_data_loading
 
 
 @task(name="Engineering & Label Preparation", retries=1)
@@ -38,7 +38,7 @@ def train_model(df_processed: pd.DataFrame, trainer):
     Generic training task that accepts any trainer class inheriting from BaseModelTrainer.
     """
     logger = get_run_logger()
-    logger.info(f"Training {trainer.model.__name__}")
+    logger.info(f"Training {trainer.model.__class__.__name__}")
 
     # --- THE CRITICAL STEP: SEPARATE X AND Y ---
     if "duration" not in df_processed.columns:
@@ -71,6 +71,28 @@ def evaluate_model(trainer, X_test_processed, y_test_real, thresholds):
 @task(name="Validate Raw Data")
 def validate_raw_data(df: pd.DataFrame):
     raw_validation = DataFrameValidation(NYC_RAW_SCHEMA_VALIDATION)
+    df_cleaned = raw_validation.drop_unexpected_columns(df)
+    df_processed = raw_validation.coerce_types(df_cleaned)
+    schema_ok = raw_validation.validate_schema(df_processed)
+
+    if not schema_ok:
+        errors = raw_validation.get_errors()
+        # Join errors into a single string for the exception message
+        error_report = "\n- ".join(errors)
+        raise ValueError(f"Data Validation Failed:\n- {error_report}")
+
+    return df_processed
+
+
+@task(name="Validate Processed Data")
+def validate_processed_data(df: pd.DataFrame, model_type: str):
+    # Use model-specific schema validation
+    if model_type == "catboost":
+        schema = NYC_SCHEMA_VALIDATION_FOR_CATBOOST
+    else:
+        schema = NYC_SCHEMA_VALIDATION_FOR_TREE
+
+    raw_validation = DataFrameValidation(schema)
     df_cleaned, is_valid = raw_validation.process_and_validate(df)
 
     if not is_valid:
@@ -82,15 +104,22 @@ def validate_raw_data(df: pd.DataFrame):
     return df_cleaned
 
 
+@task(name="Load data")
+def load_train_test_data(train_urls, test_urls):
+    train_df = nyc_data_loading(train_urls)
+
+    test_df = nyc_data_loading(test_urls)
+
+    return train_df, test_df
+
+
 @flow(name="NYC Taxi Duration Training Pipeline")
 def nyc_taxi_pipeline(
     train_urls: list[str],
     test_urls: list[str],
     model_type: str,
 ):
-    train_df = nyc_data_loading(train_urls)
-
-    test_df = nyc_data_loading(test_urls)
+    train_df, test_df = load_train_test_data(train_urls, test_urls)
 
     train_df = validate_raw_data(train_df)
     test_df = validate_raw_data(test_df)
@@ -98,6 +127,9 @@ def nyc_taxi_pipeline(
     # 3. Process Test Data (Transform only)
     train_df, feature_engineer = run_feature_engineering(train_df, model_type)
     test_df = feature_engineer.transform(test_df)
+
+    train_df = validate_processed_data(train_df, model_type)
+    test_df = validate_processed_data(test_df, model_type)
 
     if model_type == "catboost":
         trainer = NYCCatBoostTrainer()
@@ -141,8 +173,9 @@ if __name__ == "__main__":
             "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2022-01.parquet",
         ],
         test_urls=[
-            "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2025-06.parquet",
+            # "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2025-06.parquet",
             "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-02.parquet",
         ],
-        model_type="xgboost",
+        # model_type="xgboost",
+        model_type="catboost",
     )

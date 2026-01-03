@@ -16,8 +16,7 @@ class NumericalMedianFiller(FeatureTransformer):
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Fill NaNs using the medians learned during fit."""
-        df_copy = df.copy()
         for col, median_val in self.medians_.items():
-            if col in df_copy.columns:
-                df_copy[col] = df_copy[col].fillna(median_val)
-        return df_copy
+            if col in df.columns:
+                df[col] = df[col].fillna(median_val)
+        return df

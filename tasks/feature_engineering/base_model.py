@@ -20,28 +20,31 @@ class FeatureEngineer(ABC):
     def fit(self, df: pd.DataFrame):
         """
         Sequentially fits all transformers on the training data.
-        Note: We use a copy to avoid side effects during the fit phase.
+        IMPORTANT: This method modifies the input DataFrame in-place.
+        If you need to preserve the original, copy it before calling fit.
         """
-        temp_df = df.copy()
         for transformer in self.transformers:
-            transformer.fit(temp_df)
-            # We must transform the temp_df so the NEXT transformer
+            transformer.fit(df)
+            # We must transform so the NEXT transformer
             # sees the data as it will appear in the real pipeline.
-            temp_df = transformer.transform(temp_df)
+            df = transformer.transform(df)
 
         self._is_fitted = True
         return self
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Applies all learned transformations to the data."""
+        """
+        Applies all learned transformations to the data.
+        IMPORTANT: This method modifies the input DataFrame in-place.
+        If you need to preserve the original, copy it before calling transform.
+        """
         if not self._is_fitted:
             raise RuntimeError("Engineer must be fitted before calling transform.")
 
-        df_transformed = df.copy()
         for transformer in self.transformers:
-            df_transformed = transformer.transform(df_transformed)
+            df = transformer.transform(df)
 
-        return df_transformed
+        return df
 
     def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Helper for training phase."""

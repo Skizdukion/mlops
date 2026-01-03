@@ -18,8 +18,7 @@ class CategoricalModeFiller(FeatureTransformer):
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Fill NaNs using the modes learned during fit."""
-        df_copy = df.copy()
         for col, mode_value in self.modes_.items():
-            if col in df_copy.columns:
-                df_copy[col] = df_copy[col].fillna(mode_value)
-        return df_copy
+            if col in df.columns:
+                df[col].fillna(mode_value, inplace=True)
+        return df

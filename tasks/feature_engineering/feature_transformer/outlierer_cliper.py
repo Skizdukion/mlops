@@ -24,8 +24,7 @@ class OutlierClipper(FeatureTransformer):
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply the clipping using stored bounds."""
-        df_copy = df.copy()
         for col, (lower, upper) in self.limits_.items():
-            if col in df_copy.columns:
-                df_copy[col] = df_copy[col].clip(lower=lower, upper=upper)
-        return df_copy
+            if col in df.columns:
+                df[col] = df[col].clip(lower=lower, upper=upper)
+        return df

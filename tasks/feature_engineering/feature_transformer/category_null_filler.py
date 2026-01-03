@@ -12,8 +12,7 @@ class CategoricalNullFiller(FeatureTransformer):
         return self
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        df_copy = df.copy()
         for col in self.columns:
-            if col in df_copy.columns:
-                df_copy[col] = df_copy[col].fillna(self.fill_value)
-        return df_copy
+            if col in df.columns:
+                df[col].fillna(self.fill_value, inplace=True)
+        return df

@@ -6,6 +6,7 @@ from tasks.feature_engineering.feature_transformer import (
     OutlierClipper,
     ValueClipper,
     SkewnessTransformer,
+    FrequencyCatEncoder,
     OneHotEncoderTransformer,
 )
 
@@ -45,23 +46,29 @@ class NycTreeDataFeature(BaseNycFeature):
         transformers = [
             NumericalMedianFiller(columns=["passenger_count"]),
             DatePartTransformer(columns=["tpep_pickup_datetime"]),
-            OutlierClipper(columns=["duration"]),
-            ValueClipper(limits={"duration": (0, None)}),
+            ValueClipper(limits={"duration": (0.1, None)}),
+            OutlierClipper(
+                columns=["duration"],
+                lower_percentile=0.01,
+                upper_percentile=0.95,
+            ),
             SkewnessTransformer(
                 columns=[
                     "passenger_count",
-                    "trip_distance",
-                    "fare_amount",
-                    "extra",
-                    "mta_tax",
-                    "tip_amount",
-                    "tolls_amount",
-                    "improvement_surcharge",
-                    "total_amount",
                 ],
                 method="log",
             ),
-            OneHotEncoderTransformer(columns=["pu_do"]),
+            # Use FrequencyCatEncoder instead of OneHot to avoid 291GB memory usage
+            FrequencyCatEncoder(columns=["pu_do"]),
+            OneHotEncoderTransformer(
+                columns=[
+                    "tpep_pickup_datetime_hour",
+                    "tpep_pickup_datetime_month",
+                    "tpep_pickup_datetime_year",
+                    "tpep_pickup_datetime_weekday",
+                    "tpep_pickup_datetime_is_weekend",
+                ]
+            ),
         ]
         super().__init__(transformers=transformers)
 
@@ -71,19 +78,15 @@ class NycCatBoostFeature(BaseNycFeature):
         transformers = [
             NumericalMedianFiller(columns=["passenger_count"]),
             DatePartTransformer(columns=["tpep_pickup_datetime"]),
-            OutlierClipper(columns=["duration"]),
-            ValueClipper(limits={"duration": (0, None)}),
+            ValueClipper(limits={"duration": (0.1, None)}),
+            OutlierClipper(
+                columns=["duration"],
+                lower_percentile=0.01,
+                upper_percentile=0.95,
+            ),
             SkewnessTransformer(
                 columns=[
                     "passenger_count",
-                    "trip_distance",
-                    "fare_amount",
-                    "extra",
-                    "mta_tax",
-                    "tip_amount",
-                    "tolls_amount",
-                    "improvement_surcharge",
-                    "total_amount",
                 ],
                 method="log",
             ),

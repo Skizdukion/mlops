@@ -16,14 +16,15 @@ class SkewnessTransformer(FeatureTransformer):
         return self  # Stateless, though Box-Cox would require a fit
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        df_copy = df.copy()
         for col in self.columns:
-            if col in df_copy.columns:
+            if col in df.columns:
                 if self.method == "log":
                     # np.log1p handles log(0) by doing log(1+x)
-                    df_copy[col] = np.log1p(df_copy[col])
+                    # However, it cannot handle negative values, so clip to 0
+                    df[col] = np.log1p(np.maximum(df[col], 0))
                 elif self.method == "sqrt":
-                    df_copy[col] = np.sqrt(df_copy[col])
+                    # sqrt cannot handle negative values, so clip to 0
+                    df[col] = np.sqrt(np.maximum(df[col], 0))
                 elif self.method == "exp":
-                    df_copy[col] = np.exp(df_copy[col])
-        return df_copy
+                    df[col] = np.exp(df[col])
+        return df

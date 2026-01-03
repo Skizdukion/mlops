@@ -11,6 +11,7 @@ from .category_model_filler import CategoricalModeFiller
 from .category_null_filler import CategoricalNullFiller
 from .numerical_zero_filler import NumericalZeroFiller
 from .one_hot import OneHotEncoderTransformer
+from .frequency_cat_encoder import FrequencyCatEncoder
 
 # This tells Python what to export when someone imports *
 __all__ = [
@@ -25,4 +26,5 @@ __all__ = [
     "CategoricalNullFiller",
     "NumericalZeroFiller",
     "OneHotEncoderTransformer",
+    "FrequencyCatEncoder",
 ]
