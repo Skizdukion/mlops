@@ -4,7 +4,6 @@ from catboost import CatBoostRegressor
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import json
 import base64
-import pandas as pd
 import tempfile
 import os
 

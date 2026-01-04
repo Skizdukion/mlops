@@ -53,17 +53,18 @@ class NYCRandomForestTrainer(BaseModelTrainer):
     def init_model(self) -> RandomForestRegressor:
         # Default params optimized for a balance of speed and accuracy
         params = self.model_params or {
-            "n_estimators": 100,
-            "max_depth": 12,  # Prevents the trees from growing too deep (overfitting)
+            "n_estimators": 40,
+            "max_depth": 6,  # Prevents the trees from growing too deep (overfitting)
             "min_samples_split": 5,
             "random_state": 42,
             "n_jobs": -1,  # Uses all available CPU cores
+            "verbose": 20,  # Log progress
         }
         return RandomForestRegressor(**params)
 
     def train(self, X_train: pd.DataFrame, y_train: pd.Series, **kwargs):
         self.logger.info("Fitting Random Forest model...")
-        self.model.fit(X_train, y_train)
+        self.model.fit(X_train, y_train, **kwargs)
 
 
 class NYCElasticNetTrainer(BaseModelTrainer):
@@ -79,4 +80,4 @@ class NYCElasticNetTrainer(BaseModelTrainer):
 
     def train(self, X_train: pd.DataFrame, y_train: pd.Series, **kwargs):
         self.logger.info("Fitting ElasticNet model...")
-        self.model.fit(X_train, y_train)
+        self.model.fit(X_train, y_train, **kwargs)

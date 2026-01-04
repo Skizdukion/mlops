@@ -66,7 +66,7 @@ class NycTreeDataFeature(BaseNycFeature):
                     "tpep_pickup_datetime_month",
                     "tpep_pickup_datetime_year",
                     "tpep_pickup_datetime_weekday",
-                    "tpep_pickup_datetime_is_weekend",
+                    # "tpep_pickup_datetime_is_weekend",
                 ]
             ),
         ]

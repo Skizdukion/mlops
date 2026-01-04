@@ -1,10 +1,5 @@
-from pandas import DataFrame
-from typing import Dict
-from pandas import DataFrame
-from typing import Dict, List, Tuple
-
 import pandas as pd
-import numpy as np
+import re
 from typing import Dict, List, Tuple
 
 
@@ -34,14 +29,25 @@ class DataFrameValidation:
         print(message)
         self._errors.append(message)
 
+    def _matches_schema(self, col_name: str, schema_keys: set) -> bool:
+        """Checks if a column name matches any key in the schema (regex supported)."""
+        for pattern in schema_keys:
+            if re.fullmatch(pattern, col_name):
+                return True
+        return False
+
     def drop_unexpected_columns(self, data_frame: pd.DataFrame) -> pd.DataFrame:
         """Removes columns not defined in the schema."""
         if not self.schema:
             return data_frame
 
-        allowed_cols = set(self.schema.keys())
+        schema_keys = set(self.schema.keys())
         current_cols = set(data_frame.columns)
-        extra_cols = current_cols - allowed_cols
+
+        # Identify columns that match NO schema pattern
+        extra_cols = {
+            col for col in current_cols if not self._matches_schema(col, schema_keys)
+        }
 
         if extra_cols:
             print(f"Dropping unexpected columns: {extra_cols}")
@@ -58,8 +64,13 @@ class DataFrameValidation:
         if not self.schema:
             return data_frame
 
-        for col, expected_type in self.schema.items():
-            if col in data_frame.columns:
+        for pattern, expected_type in self.schema.items():
+            # Find all matching columns for this pattern
+            matching_cols = [
+                col for col in data_frame.columns if re.fullmatch(pattern, col)
+            ]
+
+            for col in matching_cols:
                 try:
                     # Only convert if types actually differ to save performance
                     if str(data_frame[col].dtype) != expected_type:
@@ -77,18 +88,26 @@ class DataFrameValidation:
             return True
 
         valid = True
-        for col, expected_type in self.schema.items():
-            if col not in data_frame.columns:
-                self._add_error(f"Schema Error: Column '{col}' missing.")
+        for pattern, expected_type in self.schema.items():
+            # Find all matching columns
+            matching_cols = [
+                col for col in data_frame.columns if re.fullmatch(pattern, col)
+            ]
+
+            # If no columns match this pattern, it's missing
+            if not matching_cols:
+                self._add_error(f"Schema Error: No columns match pattern '{pattern}'.")
                 valid = False
                 continue
 
-            actual_type = str(data_frame[col].dtype)
-            if actual_type != expected_type:
-                self._add_error(
-                    f"Type Error: Column '{col}' expected {expected_type}, got {actual_type}"
-                )
-                valid = False
+            # Validate type for each matching column
+            for col in matching_cols:
+                actual_type = str(data_frame[col].dtype)
+                if actual_type != expected_type:
+                    self._add_error(
+                        f"Type Error: Column '{col}' (matches '{pattern}') expected {expected_type}, got {actual_type}"
+                    )
+                    valid = False
         return valid
 
     def validate_no_nulls(self, data_frame: pd.DataFrame) -> bool:

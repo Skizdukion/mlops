@@ -6,7 +6,12 @@ from tasks.feature_engineering.nyc_duration import (
     NycTreeDataFeature,
 )
 from tasks.model_registry.base_model import MLflowModelRegistry
-from tasks.training.nyc_duration import NYCCatBoostTrainer, NYCXGBTrainer
+from tasks.training.nyc_duration import (
+    NYCCatBoostTrainer,
+    NYCXGBTrainer,
+    NYCRandomForestTrainer,
+    NYCElasticNetTrainer,
+)
 from tasks.validation.base_model import DataFrameValidation
 from tasks.validation.constant import (
     NYC_RAW_SCHEMA_VALIDATION,
@@ -107,7 +112,6 @@ def validate_processed_data(df: pd.DataFrame, model_type: str):
 @task(name="Load data")
 def load_train_test_data(train_urls, test_urls):
     train_df = nyc_data_loading(train_urls)
-
     test_df = nyc_data_loading(test_urls)
 
     return train_df, test_df
@@ -136,9 +140,9 @@ def nyc_taxi_pipeline(
     elif model_type == "xgboost":
         trainer = NYCXGBTrainer()
     elif model_type == "rf":
-        trainer = NYCXGBTrainer()
+        trainer = NYCRandomForestTrainer()
     elif model_type == "elastic":
-        trainer = NYCXGBTrainer()
+        trainer = NYCElasticNetTrainer()
     else:
         raise SystemError(f"Unknown Model {model_type}")
 
@@ -157,25 +161,48 @@ def nyc_taxi_pipeline(
     # 6. Register with MLflow
     if report["status"] == "PASSED":
         registry = MLflowModelRegistry(experiment_name="NYC-Taxi-Duration")
-        registry.register_model(
-            model_name="NYC_Duration",
+        model_name = f"NYC_Duration_{model_type}"
+        version = registry.register_model(
+            model_name=model_name,
             model=trainer.model,
             eval_report=report,
-            engineer=feature_engineer,
+            feature_engineering=feature_engineer,
         )
+        registry.promote_to_production(model_name, version, "rmse")
 
 
 if __name__ == "__main__":
+
+    train_urls = [
+        "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet",
+        "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-01.parquet",
+        "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2022-01.parquet",
+    ]
+
+    test_urls = [
+        # "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2025-06.parquet",
+        "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-02.parquet",
+    ]
+
+    # nyc_taxi_pipeline(
+    #     train_urls=train_urls,
+    #     test_urls=test_urls,
+    #     model_type="catboost",
+    # )
+
+    # nyc_taxi_pipeline(
+    #     train_urls=train_urls,
+    #     test_urls=test_urls,
+    #     model_type="xgboost",
+    # )
+
     nyc_taxi_pipeline(
-        train_urls=[
-            "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet",
-            "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-01.parquet",
-            "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2022-01.parquet",
-        ],
-        test_urls=[
-            # "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2025-06.parquet",
-            "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-02.parquet",
-        ],
-        # model_type="xgboost",
-        model_type="catboost",
+        train_urls=train_urls,
+        test_urls=test_urls,
+        model_type="rf",
+    )
+    nyc_taxi_pipeline(
+        train_urls=train_urls,
+        test_urls=test_urls,
+        model_type="elastic",
     )
