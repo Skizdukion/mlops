@@ -1,6 +1,9 @@
 import pandas as pd
+import optuna
+
 from prefect import flow, task, get_run_logger
 from tasks.evaluation.nyc_duration import NYCDurationEvaluator
+from tasks.tuning.nyc_duration import HyperparameterTuner
 from tasks.feature_engineering.nyc_duration import (
     NycCatBoostFeature,
     NycTreeDataFeature,
@@ -19,6 +22,11 @@ from tasks.validation.constant import (
     NYC_SCHEMA_VALIDATION_FOR_TREE,
 )
 from tasks.data_loading import nyc_data_loading
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+
+from optuna.trial import TrialState
 
 
 @task(name="Engineering & Label Preparation", retries=1)
@@ -38,7 +46,7 @@ def run_feature_engineering(df: pd.DataFrame, model):
 
 
 @task(name="Model Training")
-def train_model(df_processed: pd.DataFrame, trainer):
+def train_model(df_processed: pd.DataFrame, trainer, **params):
     """
     Generic training task that accepts any trainer class inheriting from BaseModelTrainer.
     """
@@ -53,7 +61,7 @@ def train_model(df_processed: pd.DataFrame, trainer):
     X_train = df_processed.drop(columns=["duration"])
 
     # Execute the training logic
-    trainer.train(X_train, y_train)
+    trainer.train(X_train, y_train, **params)
 
     return trainer, X_train, y_train
 
@@ -117,6 +125,35 @@ def load_train_test_data(train_urls, test_urls):
     return train_df, test_df
 
 
+@task(name="Hyper params tuning")
+def hyper_params_tuning(df, trainer_class):
+    logger = get_run_logger()
+
+    train_df, val_df = train_test_split(df, test_size=0.2, random_state=42)
+    X_train = train_df.drop(columns=["duration"])
+    X_val = val_df.drop(columns=["duration"])
+    y_train = train_df["duration"].values
+    y_val = val_df["duration"].values
+
+    params_tuner = HyperparameterTuner(
+        trainer_class, X_train, y_train, X_val, y_val, mean_squared_error
+    )
+    # Enable Optuna logging to show progress in terminal
+    optuna.logging.set_verbosity(optuna.logging.INFO)
+
+    study = params_tuner.optimize()
+
+    pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
+    complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+
+    logger.info("Study statistics: ")
+    logger.info(f"Number of finished trials: {len(study.trials)}")
+    logger.info(f"Number of pruned trials: {len(pruned_trials)}")
+    logger.info(f"Number of complete trials: {len(complete_trials)}")
+
+    return study.best_params
+
+
 @flow(name="NYC Taxi Duration Training Pipeline")
 def nyc_taxi_pipeline(
     train_urls: list[str],
@@ -136,26 +173,29 @@ def nyc_taxi_pipeline(
     test_df = validate_processed_data(test_df, model_type)
 
     if model_type == "catboost":
-        trainer = NYCCatBoostTrainer()
+        trainer_class = NYCCatBoostTrainer().__class__
     elif model_type == "xgboost":
-        trainer = NYCXGBTrainer()
+        trainer_class = NYCXGBTrainer().__class__
     elif model_type == "rf":
-        trainer = NYCRandomForestTrainer()
+        trainer_class = NYCRandomForestTrainer().__class__
     elif model_type == "elastic":
-        trainer = NYCElasticNetTrainer()
+        trainer_class = NYCElasticNetTrainer().__class__
     else:
         raise SystemError(f"Unknown Model {model_type}")
 
-    # 4. Train
-    trainer, _, _ = train_model(train_df, trainer)
+    # 4. Hyper params tuning
+    best_params = hyper_params_tuning(train_df, trainer_class)
 
+    trainer = trainer_class(model_params=best_params)
+
+    trainer_class, _, _ = train_model(train_df, trainer)
     # 5. Evaluate
     # Extract y_test from the processed test dataframe
     y_test_real = test_df["duration"]
     X_test_final = test_df.drop(columns=["duration"])
 
     report = evaluate_model(
-        trainer, X_test_final, y_test_real, thresholds={"rmse": 10.0}
+        trainer_class, X_test_final, y_test_real, thresholds={"rmse": 10.0}
     )
 
     # 6. Register with MLflow
@@ -164,7 +204,7 @@ def nyc_taxi_pipeline(
         model_name = f"NYC_Duration_{model_type}"
         version = registry.register_model(
             model_name=model_name,
-            model=trainer.model,
+            model=trainer_class.model,
             eval_report=report,
             feature_engineering=feature_engineer,
         )
@@ -190,19 +230,20 @@ if __name__ == "__main__":
     #     model_type="catboost",
     # )
 
+    nyc_taxi_pipeline(
+        train_urls=train_urls,
+        test_urls=test_urls,
+        model_type="xgboost",
+    )
+
     # nyc_taxi_pipeline(
     #     train_urls=train_urls,
     #     test_urls=test_urls,
-    #     model_type="xgboost",
+    #     model_type="rf",
     # )
 
-    nyc_taxi_pipeline(
-        train_urls=train_urls,
-        test_urls=test_urls,
-        model_type="rf",
-    )
-    nyc_taxi_pipeline(
-        train_urls=train_urls,
-        test_urls=test_urls,
-        model_type="elastic",
-    )
+    # nyc_taxi_pipeline(
+    #     train_urls=train_urls,
+    #     test_urls=test_urls,
+    #     model_type="elastic",
+    # )
