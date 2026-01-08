@@ -11,3 +11,8 @@ pytest-asyncio>=0.21.0
 pytest-mock>=3.11.0
 pytest-httpx>=0.24.0
 httpx>=0.24.0
+sqlite3
+sqlalchemy>=2.0.0
+sqlmodel
+pandas
+scikit-learn

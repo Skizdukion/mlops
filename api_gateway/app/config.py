@@ -59,7 +59,16 @@ class Config:
 
     MLFLOW_TRACKING_URI: str = get_env_var("MLFLOW_TRACKING_URI", required=True)
     MLFLOW_EXPERIMENT_NAME: str = get_env_var("MLFLOW_EXPERIMENT_NAME", required=True)
-    MLFLOW_MODEL_REFRESH_INTERVAL: str = get_env_var("MLFLOW_MODEL_REFRESH_INTERVAL", required=True)
+    MLFLOW_MODEL_REFRESH_INTERVAL: str = get_env_var(
+        "MLFLOW_MODEL_REFRESH_INTERVAL", required=True
+    )
+
+    MONITORING_METRICS_INTERVAL: str = get_env_var(
+        "MONITORING_METRICS_INTERVAL", required=True
+    )
+    METRICS_LAST_ROW_FETCH: str = get_env_var("METRICS_LAST_ROW_FETCH", required=True)
+
+    SQLITE_DB_PATH: str = get_env_var("SQLITE_DB_PATH", required=True)
 
 
 config = Config()

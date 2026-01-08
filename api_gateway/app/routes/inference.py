@@ -1,6 +1,5 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, HttpUrl, Field, conint, confloat
-from typing import Optional, Dict, Any
+from fastapi import APIRouter
+from pydantic import BaseModel, Field, conint, confloat
 from datetime import datetime
 from api_gateway.app.constant.model_type import ModelType
 
@@ -19,7 +18,7 @@ class NycDurationPredictionRequest(BaseModel):
 
 
 class NycDurationPredictionResponse(BaseModel):
-    prediction_id: str = Field(..., description="Unique prediction identifier")
+    prediction_id: int = Field(..., description="Unique prediction identifier")
     est_duration: confloat(gt=0) = Field(
         ..., description="Estimated trip duration in seconds"
     )
