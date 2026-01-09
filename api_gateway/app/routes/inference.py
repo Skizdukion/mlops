@@ -1,29 +1,19 @@
 from fastapi import APIRouter
-from pydantic import BaseModel, Field, conint, confloat
-from datetime import datetime
-from api_gateway.app.constant.model_type import ModelType
+from api_gateway.app.services.inference import inference_service
+from api_gateway.app.routes.dto.inference import (
+    NycDurationPredictionResponse,
+    NycDurationPredictionRequest,
+)
 
 router = APIRouter()
 
-class NycDurationPredictionRequest(BaseModel):
-    """Request model for pronunciation assessment."""
 
-    tpep_pickup_datetime: datetime = Field(..., description="Pickup time (UTC)")
-    passenger_count: conint(ge=1, le=12) = Field(..., description="Passenger Count")
-    pulocationid: int = Field(..., description="Pickup location id")
-    dolocationid: int = Field(..., description="Estimate dropoff location id")
-    model_type: ModelType = Field(
-        default=ModelType.xgboost, description="Model to use for prediction"
-    )
-
-
-class NycDurationPredictionResponse(BaseModel):
-    prediction_id: int = Field(..., description="Unique prediction identifier")
-    est_duration: confloat(gt=0) = Field(
-        ..., description="Estimated trip duration in seconds"
-    )
-
-
-@router.post("/predict", response_model=NycDurationPredictionResponse)
+@router.post(
+    "/predict",
+    response_model=NycDurationPredictionResponse,
+    summary="Predict Trip Duration",
+    description="Predict the estimated duration of a taxi trip based on pickup time, location, and passenger count.",
+)
 async def prediction(request: NycDurationPredictionRequest):
-    pass
+    payload = request.dict()
+    return inference_service.inference(**payload)

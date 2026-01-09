@@ -1,13 +1,14 @@
 from datetime import datetime
 from typing import Optional
 from sqlmodel import Field, SQLModel, Relationship
+import uuid
 
 
 class Prediction(SQLModel, table=True):
     """Prediction model for both database and API."""
 
     __tablename__ = "nyc_duration_inferences"
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
     tpep_pickup_datetime: datetime
     passenger_count: int
     pulocationid: int
@@ -28,8 +29,8 @@ class Feedback(SQLModel, table=True):
 
     __tablename__ = "nyc_duration_feedback"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
-    prediction_id: int = Field(foreign_key="nyc_duration_inferences.id")
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, primary_key=True)
+    prediction_id: uuid.UUID = Field(foreign_key="nyc_duration_inferences.id")
     dolocationid: int
     duration: float
     created_at: datetime = Field(default_factory=datetime.utcnow)

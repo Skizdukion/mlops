@@ -59,6 +59,9 @@ class Config:
 
     MLFLOW_TRACKING_URI: str = get_env_var("MLFLOW_TRACKING_URI", required=True)
     MLFLOW_EXPERIMENT_NAME: str = get_env_var("MLFLOW_EXPERIMENT_NAME", required=True)
+    MLFLOW_MODEL_REGISTER_PATTERN: str = get_env_var(
+        "MLFLOW_MODEL_REGISTER_PATTERN", required=True
+    )
     MLFLOW_MODEL_REFRESH_INTERVAL: str = get_env_var(
         "MLFLOW_MODEL_REFRESH_INTERVAL", required=True
     )

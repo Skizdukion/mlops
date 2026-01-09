@@ -1,18 +1,18 @@
 from fastapi import APIRouter, status
-from pydantic import BaseModel, Field, confloat
-from api_gateway.app.storage.repository import SqlLiteDatabase
-from api_gateway.app.models.domain import Feedback
+from api_gateway.app.services.feedback import feedback_service
+from api_gateway.app.routes.dto.feedback import (
+    NycDurationFeedbackRequest,
+)
 
 router = APIRouter()
 
-class NycDurationFeedbackRequest(BaseModel):
-    """Request model for pronunciation assessment."""
 
-    prediction_id: int = Field(..., description="Unique prediction identifier")
-    dolocationid: int = Field(..., description="Real dropoff location id")
-    duration: confloat(gt=0) = Field(..., description="Real duration")
-
-
-@router.post("/feedback", status_code=status.HTTP_204_NO_CONTENT)
+@router.post(
+    "/feedback",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Submit Trip Feedback",
+    description="Submit actual trip feedback including real duration to monitor model performance.",
+)
 async def feedback(request: NycDurationFeedbackRequest):
-    pass
+    feedback_service.feedback(request)
+    return

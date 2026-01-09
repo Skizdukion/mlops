@@ -3,12 +3,11 @@ from api_gateway.app.config import config
 from api_gateway.app.constant.model_type import ModelType
 import mlflow
 import threading
-from api_gateway.app.services.utils import ThreadSupportMixin
-
+from api_gateway.app.services.utils.thread_support import ThreadSupportMixin
 
 LOADER_MAP = {
-    ModelType.xgboost: mlflow.xgboost.load_model,
-    ModelType.catboost: mlflow.catboost.load_model,
+    ModelType.xgboost: mlflow.sklearn.load_model,
+    # ModelType.catboost: mlflow.catboost.load_model,
     ModelType.rf: mlflow.sklearn.load_model,
     ModelType.elastic: mlflow.sklearn.load_model,
 }
@@ -16,7 +15,7 @@ LOADER_MAP = {
 
 class MlflowModelManagementService(ThreadSupportMixin):
     def __init__(self):
-        self.experiment_name = config.MLFLOW_EXPERIMENT_NAME
+        self.model_register_pattern = config.MLFLOW_MODEL_REGISTER_PATTERN
         mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
         mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
         self.mlflow_client: MlflowClient = MlflowClient(config.MLFLOW_TRACKING_URI)
@@ -26,7 +25,7 @@ class MlflowModelManagementService(ThreadSupportMixin):
         super().__init__()
 
     def _switch_model(self, model_type, run_id):
-        model_uri = f"models:/{self.experiment_name}_{model_type}@champion"
+        model_uri = f"models:/{self.model_register_pattern}_{model_type}@champion"
 
         loader = LOADER_MAP.get(model_type)
 
@@ -54,8 +53,9 @@ class MlflowModelManagementService(ThreadSupportMixin):
 
     def _load_model(self):
         for model_type in ModelType:
+            model_name = f"{self.model_register_pattern}_{model_type.value}"
             champion_version_details = self.mlflow_client.get_model_version_by_alias(
-                model_type.value, "champion"
+                model_name, "champion"
             )
 
             with self._lock:

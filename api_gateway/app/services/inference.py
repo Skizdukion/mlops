@@ -2,6 +2,13 @@ from api_gateway.app.services.load_model import mlflow_model_management_service
 from api_gateway.app.storage.repository import repo
 from api_gateway.app.models.domain import Prediction
 import pandas as pd
+from api_gateway.app.constant.model_type import ModelType
+
+from tasks.validation.base_model import DataFrameValidation
+from tasks.validation.constant import (
+    NYC_SCHEMA_VALIDATION_FOR_CATBOOST,
+    NYC_SCHEMA_VALIDATION_FOR_TREE,
+)
 
 
 class NycDurationInferenceService:
@@ -14,7 +21,7 @@ class NycDurationInferenceService:
         passenger_count,
         pulocationid,
         dolocationid,
-        model_type,
+        model_type: ModelType,
     ):
         # 1. Prepare Input Data as DataFrame
         input_data = {
@@ -31,9 +38,9 @@ class NycDurationInferenceService:
         pipeline = model_data.get("pipeline")
 
         # 3. Apply Feature Engineering
-        if pipeline:
-            # The pipeline expects a DataFrame and transforms it
-            df = pipeline.transform(df)
+        df = pipeline.transform(df)
+
+        df = df.drop(columns=["tpep_pickup_datetime"])
 
         # 4. Inference
         # model.predict usually returns a numpy array or list
@@ -46,10 +53,14 @@ class NycDurationInferenceService:
             passenger_count=passenger_count,
             pulocationid=pulocationid,
             dolocationid=dolocationid,
-            model_type=model_type,
+            model_type=model_type.value,
             predicted_duration=predicted_duration,
         )
+
         prediction_id = repo.save_inference(prediction_doc)
 
         # Return inference
         return {"prediction_id": prediction_id, "est_duration": predicted_duration}
+
+
+inference_service = NycDurationInferenceService()
