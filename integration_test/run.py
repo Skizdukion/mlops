@@ -3,6 +3,7 @@ import requests
 import psycopg
 from tqdm import tqdm
 import random
+import time
 
 # DB Config
 DB_URL = "postgresql://postgres:postgres@localhost:5432/mlops"
@@ -10,7 +11,6 @@ API_URL = "http://127.0.0.1:8000"
 DATA_URL = (
     "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-03.parquet"
 )
-
 
 
 def load_data():
@@ -35,8 +35,8 @@ def run_test():
     )
 
     # Sample 1000 rows
-    sample_df = df.sample(n=2000)
-    print(f"Selected {len(sample_df)} rows for testing.")
+    # sample_df = df.sample(n=2000)
+    print(f"Selected {len(df)} rows for testing.")
 
     print("Sending requests...")
     success_count = 0
@@ -44,7 +44,11 @@ def run_test():
 
     models = ["xgboost", "rf", "elastic"]
 
-    for index, row in tqdm(sample_df.iterrows(), total=len(sample_df)):
+    # Rate limiting: 500 requests per minute ~ 8.33 req/s => 0.12s per request
+    DELAY = (60.0 / 500.0) / 2
+
+    for index, row in tqdm(df.iterrows(), total=len(df)):
+        time.sleep(DELAY)
         try:
             # Prepare inference request
             pickup_time = row["tpep_pickup_datetime"]

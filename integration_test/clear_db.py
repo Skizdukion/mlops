@@ -13,8 +13,8 @@ def clear_db():
     try:
         with psycopg.connect(DB_URL) as conn:
             with conn.cursor() as cur:
-                # cur.execute("TRUNCATE TABLE nyc_duration_feedback CASCADE")
-                # cur.execute("TRUNCATE TABLE nyc_duration_inferences CASCADE")
+                cur.execute("TRUNCATE TABLE nyc_duration_feedback CASCADE")
+                cur.execute("TRUNCATE TABLE nyc_duration_inferences CASCADE")
                 cur.execute("TRUNCATE TABLE monitoring_metrics CASCADE")
                 conn.commit()
         print("Database cleared.")
