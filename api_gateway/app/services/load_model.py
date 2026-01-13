@@ -17,7 +17,6 @@ class MlflowModelManagementService(ThreadSupportMixin):
     def __init__(self):
         self.model_register_pattern = config.MLFLOW_MODEL_REGISTER_PATTERN
         mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
-        mlflow.set_experiment(config.MLFLOW_EXPERIMENT_NAME)
         self.mlflow_client: MlflowClient = MlflowClient(config.MLFLOW_TRACKING_URI)
         self.refresh_interval = config.MLFLOW_MODEL_REFRESH_INTERVAL
         self._model_registry = {}

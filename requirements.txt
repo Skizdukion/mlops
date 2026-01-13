@@ -15,3 +15,12 @@ sqlalchemy>=2.0.0
 sqlmodel
 pandas
 scikit-learn
+prefect
+tqdm
+joblib
+pyarrow
+psycopg
+psycopg_binary
+evidently
+numpy
+alembic

@@ -4,12 +4,6 @@ from api_gateway.app.models.domain import Prediction
 import pandas as pd
 from api_gateway.app.constant.model_type import ModelType
 
-from tasks.validation.base_model import DataFrameValidation
-from tasks.validation.constant import (
-    NYC_SCHEMA_VALIDATION_FOR_CATBOOST,
-    NYC_SCHEMA_VALIDATION_FOR_TREE,
-)
-
 
 class NycDurationInferenceService:
     def __init__(self):
@@ -41,6 +35,8 @@ class NycDurationInferenceService:
         df = pipeline.transform(df)
 
         df = df.drop(columns=["tpep_pickup_datetime"])
+        df = df.drop(columns=["pulocationid"])
+        df = df.drop(columns=["dolocationid"])
 
         # 4. Inference
         # model.predict usually returns a numpy array or list

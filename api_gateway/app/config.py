@@ -58,7 +58,6 @@ class Config:
     API_HOST: str = get_env_var("API_HOST", required=True)
 
     MLFLOW_TRACKING_URI: str = get_env_var("MLFLOW_TRACKING_URI", required=True)
-    MLFLOW_EXPERIMENT_NAME: str = get_env_var("MLFLOW_EXPERIMENT_NAME", required=True)
     MLFLOW_MODEL_REGISTER_PATTERN: str = get_env_var(
         "MLFLOW_MODEL_REGISTER_PATTERN", required=True
     )
@@ -71,7 +70,18 @@ class Config:
     )
     METRICS_LAST_ROW_FETCH: str = get_env_var("METRICS_LAST_ROW_FETCH", required=True)
 
-    SQLITE_DB_PATH: str = get_env_var("SQLITE_DB_PATH", required=True)
+    SQLITE_DB_PATH: str = get_env_var("SQLITE_DB_PATH", required=False)
+
+    POSTGRES_USER: str = get_env_var("POSTGRES_USER", required=True)
+    POSTGRES_PASSWORD: str = get_env_var("POSTGRES_PASSWORD", required=True)
+    POSTGRES_DB: str = get_env_var("POSTGRES_DB", required=True)
+    POSTGRES_HOST: str = get_env_var("POSTGRES_HOST", required=True)
+    POSTGRES_PORT: str = get_env_var("POSTGRES_PORT", required=True)
+
+    @property
+    def DATABASE_URL(self) -> str:
+        """Get database URL."""
+        return f"postgresql+psycopg://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
 
 
 config = Config()
