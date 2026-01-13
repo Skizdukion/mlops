@@ -8,21 +8,9 @@ import random
 DB_URL = "postgresql://postgres:postgres@localhost:5432/mlops"
 API_URL = "http://127.0.0.1:8000"
 DATA_URL = (
-    "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-02.parquet"
+    "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-03.parquet"
 )
 
-
-def clear_db():
-    print("Clearing database...")
-    try:
-        with psycopg.connect(DB_URL) as conn:
-            with conn.cursor() as cur:
-                cur.execute("TRUNCATE TABLE nyc_duration_feedback CASCADE")
-                cur.execute("TRUNCATE TABLE nyc_duration_inferences CASCADE")
-                conn.commit()
-        print("Database cleared.")
-    except Exception as e:
-        print(f"Error clearing database: {e}")
 
 
 def load_data():
@@ -33,7 +21,6 @@ def load_data():
 
 
 def run_test():
-    clear_db()
     df = load_data()
 
     # Filter for valid data (e.g. non-null) just in case
@@ -48,7 +35,7 @@ def run_test():
     )
 
     # Sample 1000 rows
-    sample_df = df.sample(n=1000)
+    sample_df = df.sample(n=2000)
     print(f"Selected {len(sample_df)} rows for testing.")
 
     print("Sending requests...")

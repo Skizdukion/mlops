@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from api_gateway.app.services.load_model import mlflow_model_management_service
-from api_gateway.app.services.monitoring import monitoring_service
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from api_gateway.app.routes import feedback, inference
@@ -14,15 +13,11 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown."""
     print("Starting MLflow Model Management...")
     mlflow_model_management_service.start()
-    print("Starting Monitoring services...")
-    monitoring_service.start()
 
     yield
 
     print("Shutting down MLflow Model Management...")
     mlflow_model_management_service.stop()
-    print("Shutting down Monitoring services...")
-    monitoring_service.stop()
 
 
 app = FastAPI(

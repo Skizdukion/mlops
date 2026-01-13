@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=longpro159
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - default
+
+volumes:
+  grafana_data:
+
+networks:
+  default:
+    external: true
+    name: week_1_default # Assuming the root project name is week_1 based on folder name

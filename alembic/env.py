@@ -8,8 +8,18 @@ from sqlmodel import SQLModel
 from api_gateway.app.config import config as app_config
 from api_gateway.app.models.domain import (
     Prediction,  # noqa: F401
-    Feedback, # noqa: F401
-)  # Import models to register them, 
+    Feedback,  # noqa: F401
+)
+from monitoring.models import MonitoringMetrics  # noqa: F401
+import sys
+from pathlib import Path
+
+# Add project root to sys.path to allow imports from monitoring
+# env.py is in api_gateway/alembic/
+# project root is ../../
+project_root = Path(__file__).resolve().parents[2]
+sys.path.append(str(project_root))
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
