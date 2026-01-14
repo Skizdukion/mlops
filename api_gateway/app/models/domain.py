@@ -33,6 +33,7 @@ class Feedback(SQLModel, table=True):
     prediction_id: uuid.UUID = Field(foreign_key="nyc_duration_inferences.id")
     dolocationid: int
     duration: float
+    is_current_train: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationship to Prediction
