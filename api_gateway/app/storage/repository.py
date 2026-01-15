@@ -4,8 +4,8 @@ import logging
 
 from uuid import UUID
 from sqlmodel import create_engine, Session, SQLModel, select, desc
-from api_gateway.app.config import config
-from api_gateway.app.models.domain import Prediction, Feedback
+from alembic_model.config import config
+from alembic_model.models.domain import Prediction, Feedback
 
 
 logger = logging.getLogger(__name__)

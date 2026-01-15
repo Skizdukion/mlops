@@ -1,29 +1,42 @@
+import sys
+from pathlib import Path
+
 import pandas as pd
 import uuid
 from datetime import datetime
 from sqlalchemy import create_engine, insert
 from sqlmodel import Session
 
+
+# Add project root to sys.path
+project_root = Path(__file__).resolve().parents[1]
+sys.path.append(str(project_root))
+
 # from prefect import task, get_run_logger
-from api_gateway.app.config import config
-from api_gateway.app.models.domain import Prediction, Feedback
-from tasks.data_loading import nyc_data_loading
-from tasks.feature_engineering.nyc_duration import (
-    NycTreeDataFeature,
-)
+from alembic_model.config import config
+from alembic_model.models.domain import Prediction, Feedback
 
 # DB Config
 engine = create_engine(config.DATABASE_URL)
 
 
 def populate_initial_training_data(
-    df: pd.DataFrame, model_type: str, batch_size: int = 10000
+    df: pd.DataFrame, model_type: str, batch_size: int = 100000
 ):
     """
     Populates the database with the initial training data for drift monitoring using bulk insert.
     Marks these records as is_current_train=True.
     """
     now = datetime.utcnow()
+
+    # Limit initial data to 500k rows
+    MAX_ROWS = 500000
+    if len(df) > MAX_ROWS:
+        print(
+            f"[{model_type}] Input data size {len(df)} exceeds limit {MAX_ROWS}. Sampling down..."
+        )
+        df = df.sample(n=MAX_ROWS, random_state=42)
+
     total_rows = len(df)
     print(f"Starting bulk population for {model_type}: {total_rows} rows")
 
@@ -47,8 +60,8 @@ def populate_initial_training_data(
 
     col_pu = get_col("pulocationid")
     col_do = get_col("dolocationid")
-    col_dur = get_col("duration")
     col_tpep = get_col("tpep_pickup_datetime")
+    col_tdep = get_col("tpep_dropoff_datetime")
     col_pass = get_col("passenger_count")
 
     # Process in batches
@@ -67,20 +80,28 @@ def populate_initial_training_data(
             # but usually itertuples is fine if columns are standard.
             # Using row access by attribute based on our resolved names.
 
-            # Since we resolved names like 'PULocationID' matches `row.PULocationID` (if valid identifier)
-            # We'll trust accessing by attribute mechanism of Pandas named tuples
-
             # To be safe against "PULocationID" vs "pulocationid" in named tuple attribute access:
             # Pandas renames invalid identifiers.
             # Let's assume standard behavior: getattr(row, col_name)
 
+            def safe_int(val, default=0):
+                try:
+                    if pd.isna(val):
+                        return default
+                    return int(val)
+                except (ValueError, TypeError):
+                    return default
+
             try:
                 # Extract values
                 tpep = getattr(row, col_tpep)
-                pass_count = int(getattr(row, col_pass))
-                pu_loc = int(getattr(row, col_pu))
-                do_loc = int(getattr(row, col_do))
-                duration = float(getattr(row, col_dur))
+                tdep = getattr(row, col_tdep)
+                pass_count = safe_int(getattr(row, col_pass))
+                pu_loc = safe_int(getattr(row, col_pu))
+                do_loc = safe_int(getattr(row, col_do))
+
+                # Calculate duration in minutes (since it's not in raw data yet)
+                duration = (tdep - tpep).total_seconds() / 60.0
             except AttributeError as e:
                 # Fallback implementation if getattr fails (e.g. index/naming issues)
                 # Slower per row but checks might save full crash
@@ -123,24 +144,3 @@ def populate_initial_training_data(
         print(f"Inserted batch {start_idx}-{end_idx}")
 
     print("DB Population complete.")
-
-
-if __name__ == "__main__":
-    model_types = ["xgboost", "rf", "elastic"]
-
-    train_urls = [
-        "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2024-01.parquet",
-        "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2023-01.parquet",
-        "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2022-01.parquet",
-    ]
-
-    train_df = nyc_data_loading(train_urls)
-
-    # Note: If NycTreeDataFeature transforms/removes columns (e.g. OHE), this might lack PULocationID
-    # Ideally pass 'train_df' directly if raw columns are needed.
-    feature_engineer = NycTreeDataFeature()
-    df_processed = feature_engineer.fit_transform(train_df)
-
-    # Using train_df (raw) which definitely has the ID columns
-    for model_type in model_types:
-        populate_initial_training_data(train_df, model_type)

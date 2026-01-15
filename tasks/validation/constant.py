@@ -28,7 +28,7 @@ NYC_SCHEMA_VALIDATION_FOR_CATBOOST = {
     # "total_amount": "float64",
     "tpep_pickup_datetime_hour": "object",
     "tpep_pickup_datetime_month": "object",
-    "tpep_pickup_datetime_year": "object",
+    # "tpep_pickup_datetime_year": "object",
     "tpep_pickup_datetime_weekday": "object",
     "tpep_pickup_datetime_is_weekend": "object",
     "pu_do": "object",  # Now integer-encoded via FrequencyCatEncoder
@@ -48,7 +48,7 @@ NYC_SCHEMA_VALIDATION_FOR_TREE = {
     # "total_amount": "float64",
     "tpep_pickup_datetime_hour_.*": "int32",
     "tpep_pickup_datetime_month_.*": "int32",
-    "tpep_pickup_datetime_year_.*": "int32",
+    # "tpep_pickup_datetime_year_.*": "int32",
     "tpep_pickup_datetime_weekday_.*": "int32",
     "tpep_pickup_datetime_is_weekend": "int64",
     "pu_do": "int32",  # Now integer-encoded via FrequencyCatEncoder

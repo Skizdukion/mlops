@@ -1,5 +1,5 @@
 from api_gateway.app.storage.repository import repo
-from api_gateway.app.models.domain import Feedback
+from alembic_model.models.domain import Feedback
 from api_gateway.app.routes.dto.feedback import NycDurationFeedbackRequest
 
 

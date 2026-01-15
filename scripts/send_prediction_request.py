@@ -1,6 +1,5 @@
 import pandas as pd
 import requests
-import psycopg
 from tqdm import tqdm
 import random
 import time

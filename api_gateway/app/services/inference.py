@@ -1,6 +1,6 @@
 from api_gateway.app.services.load_model import mlflow_model_management_service
 from api_gateway.app.storage.repository import repo
-from api_gateway.app.models.domain import Prediction
+from alembic_model.models.domain import Prediction
 import pandas as pd
 from api_gateway.app.constant.model_type import ModelType
 

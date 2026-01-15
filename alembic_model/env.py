@@ -6,7 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 from sqlmodel import SQLModel
 from api_gateway.app.config import config as app_config
-from api_gateway.app.models.domain import (
+from alembic_model.models.domain import (
     Prediction,  # noqa: F401
     Feedback,  # noqa: F401
 )
