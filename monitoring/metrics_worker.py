@@ -11,7 +11,7 @@ from evidently.presets import RegressionPreset
 project_root = Path(__file__).resolve().parents[1]
 sys.path.append(str(project_root))
 from monitoring.models import MonitoringMetrics
-from api_gateway.app.config import config
+from alembic_model.config import config
 
 # Setup Database Engine
 engine = create_engine(config.DATABASE_URL)
@@ -196,7 +196,7 @@ def main():
 
     while True:
         now = datetime.utcnow()
-        active_models = ["catboost", "xgboost"]  # Ideally fetch from DB
+        active_models = ["xgboost", "rf", "elastic"]  # Ideally fetch from DB
 
         for window in ["10k", "1d", "7d"]:
             if (now - last_run[window]).total_seconds() >= intervals[window]:

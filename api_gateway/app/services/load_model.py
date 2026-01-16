@@ -1,5 +1,5 @@
 from mlflow.tracking import MlflowClient
-from api_gateway.app.config import config
+from alembic_model.config import config
 from api_gateway.app.constant.model_type import ModelType
 import mlflow
 import threading

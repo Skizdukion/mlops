@@ -14,7 +14,7 @@ from monitoring.models import (
     DatadriftsMetrics,
 )
 
-from api_gateway.app.config import config
+from alembic_model.config import config
 
 # Setup Database Engine
 engine = create_engine(config.DATABASE_URL)
@@ -113,7 +113,7 @@ def main():
     print("Data Drift Worker started (Evidently with Sampling)...")
 
     while True:
-        active_models = ["catboost", "xgboost"]
+        active_models = ["xgboost", "rf", "elastic"]
         # active_models = ["xgboost"]
 
         for model in active_models:
