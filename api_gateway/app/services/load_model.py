@@ -1,5 +1,5 @@
 from mlflow.tracking import MlflowClient
-from alembic_model.config import config
+from api_gateway.app.config import config
 from api_gateway.app.constant.model_type import ModelType
 import mlflow
 import threading
@@ -17,7 +17,9 @@ class MlflowModelManagementService(ThreadSupportMixin):
     def __init__(self):
         self.model_register_pattern = config.MLFLOW_MODEL_REGISTER_PATTERN
         mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
-        self.mlflow_client: MlflowClient = MlflowClient(config.MLFLOW_TRACKING_URI)
+        self.mlflow_client: MlflowClient = MlflowClient(
+            config.MLFLOW_TRACKING_URI
+        )
         self.refresh_interval = config.MLFLOW_MODEL_REFRESH_INTERVAL
         self._model_registry = {}
         self._lock = threading.Lock()

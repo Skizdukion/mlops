@@ -11,10 +11,10 @@ from evidently.presets import RegressionPreset
 project_root = Path(__file__).resolve().parents[1]
 sys.path.append(str(project_root))
 from monitoring.models import MonitoringMetrics
-from alembic_model.config import config
+from alembic_model.config import alembic_config
 
 # Setup Database Engine
-engine = create_engine(config.DATABASE_URL)
+engine = create_engine(alembic_config.DATABASE_URL)
 
 RMSE_THRESHOLD = 8.0  # Example threshold for retraining
 RETRAINING_DEPLOYMENT_NAME = "NYC Taxi Duration Training Pipeline/regular-training"  # Update with actual deployment name
@@ -35,18 +35,20 @@ def trigger_retraining_flow(model_type: str, reason: str):
 def load_data(model_type: str, window_size: str) -> pd.DataFrame:
     """
     Fetch data based on window size.
-    window_size can be: '10k', '1d', '7d'
+    window_size can be: '100', '1d', '7d'
     """
     query = ""
-    if window_size == "10k":
-        # Get last 10000 rows
-        limit = 10000
+    if window_size == "100":
+        # Get last 100 rows
+        limit = 100
         query = f"""
             SELECT 
                 p.tpep_pickup_datetime, p.predicted_duration as prediction, f.duration as target, f.created_at
             FROM nyc_duration_inferences p
             JOIN nyc_duration_feedback f ON p.id = f.prediction_id
             WHERE p.model_type = '{model_type}'
+              AND p.predicted_duration IS NOT NULL
+              AND f.is_current_train = False
             ORDER BY p.tpep_pickup_datetime DESC
             LIMIT {limit}
         """
@@ -59,6 +61,8 @@ def load_data(model_type: str, window_size: str) -> pd.DataFrame:
             JOIN nyc_duration_feedback f ON p.id = f.prediction_id
             WHERE p.model_type = '{model_type}'
               AND f.created_at >= NOW() - INTERVAL '1 DAY'
+              AND p.predicted_duration IS NOT NULL
+              AND f.is_current_train = False
             ORDER BY p.tpep_pickup_datetime DESC
         """
     elif window_size == "7d":
@@ -70,15 +74,17 @@ def load_data(model_type: str, window_size: str) -> pd.DataFrame:
             JOIN nyc_duration_feedback f ON p.id = f.prediction_id
             WHERE p.model_type = '{model_type}'
               AND f.created_at >= NOW() - INTERVAL '7 DAYS'
+              AND p.predicted_duration IS NOT NULL
+              AND f.is_current_train = False
             ORDER BY p.tpep_pickup_datetime DESC
         """
 
     try:
         df = pd.read_sql(query, engine)
 
-        # specific check for 10k window to ensure we have enough data
-        if window_size == "10k" and len(df) < 10000:
-            print(f"[{model_type} - {window_size}] Not enough data: {len(df)}/10000")
+        # specific check for 100 window to ensure we have enough data
+        if window_size == "100" and len(df) < 100:
+            print(f"[{model_type} - {window_size}] Not enough data: {len(df)}/100")
             return pd.DataFrame()  # Return empty if not enough
 
         return df
@@ -181,15 +187,15 @@ def main():
     print("Metrics Worker started...")
 
     # Scheduling config
-    # 10k window -> Run every 10 mins
+    # 100 window -> Run every 10 mins
     # 1d window -> Run every 15 mins (test mode) / 1 day (prod)
     # 7d window -> Run every 15 mins (test mode) / 7 days (prod)
 
     # We will use a simple counter or timestamp check in the loop
-    last_run = {"10k": datetime.min, "1d": datetime.min, "7d": datetime.min}
+    last_run = {"100": datetime.min, "1d": datetime.min, "7d": datetime.min}
 
     intervals = {
-        "10k": 10 * 60,  # 10 minutes
+        "100": 1 * 60,  # 1 minutes (Test mode) - normally 10 minutes
         "1d": 15 * 60,  # 15 minutes (Test mode) - normally 24h
         "7d": 15 * 60,  # 15 minutes (Test mode) - normally 7d
     }
@@ -198,7 +204,7 @@ def main():
         now = datetime.utcnow()
         active_models = ["xgboost", "rf", "elastic"]  # Ideally fetch from DB
 
-        for window in ["10k", "1d", "7d"]:
+        for window in ["100", "1d", "7d"]:
             if (now - last_run[window]).total_seconds() >= intervals[window]:
                 print(f"--- Running {window} check ---")
                 for model in active_models:

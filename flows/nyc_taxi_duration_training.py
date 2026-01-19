@@ -35,9 +35,9 @@ from tasks.validation.constant import (
 )
 
 # DB Config
-from alembic_model.config import config
+from alembic_model.config import alembic_config
 
-engine = create_engine(config.DATABASE_URL)
+engine = create_engine(alembic_config.DATABASE_URL)
 
 
 @task(name="Load Data")
@@ -221,18 +221,14 @@ def nyc_taxi_pipeline(
     train_df = validate_raw_data(train_df)
     test_df = validate_raw_data(test_df)
 
-    # Populate DB with initial training data if coming from URLs (First Run)
-    if not from_db:
-        from flows.nyc_populate_training_data import populate_initial_training_data
-
-        logger.info("Populating initial training data to DB for monitoring...")
-        try:
-            populate_initial_training_data(train_df, model_type)
-        except Exception as e:
-            logger.error(f"Failed to populate DB: {e}")
+    # Populate DB moved to after training to include predictions!
+    pass
 
     # Feature Engineering
     logger.info("Feature Engineering...")
+    # Keep a copy of raw data for DB population (alignment assumed safe as no rows dropped)
+    train_df_raw = train_df.copy()
+
     train_df, feature_engineer = run_feature_engineering(train_df, model_type)
     test_df = feature_engineer.transform(test_df)
 
@@ -261,6 +257,28 @@ def nyc_taxi_pipeline(
         trainer = trainer_class()
 
     trainer_class, _, _ = train_model(train_df, trainer)
+
+    # 5. Populate DB with initial training data + predictions (If First Run)
+    if not from_db:
+        from flows.nyc_populate_training_data import populate_initial_training_data
+
+        logger.info("Generating predictions for training data population...")
+        try:
+            # We need to predict on the PROCESSED train_df that was used for training (which has features engineered)
+            # train_df IS processed data at this point (line 241/236)
+
+            # Predict
+            X_train_full = train_df.drop(columns=["duration"])
+            y_pred_train = trainer_class.predict(X_train_full)
+
+            logger.info("Populating initial training data to DB for monitoring...")
+            # Use the RAW dataframe (for original columns) + the new PREDICTIONS
+            populate_initial_training_data(
+                train_df_raw, model_type, predictions=y_pred_train
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to populate DB: {e}")
     # 5. Evaluate
     # Extract y_test from the processed test dataframe
     y_test_real = test_df["duration"]

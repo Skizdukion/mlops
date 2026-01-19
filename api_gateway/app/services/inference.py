@@ -38,6 +38,8 @@ class NycDurationInferenceService:
         df = df.drop(columns=["pulocationid"])
         df = df.drop(columns=["dolocationid"])
 
+        df = df.drop(columns=df.filter(regex=r"^tpep_pickup_datetime_year_").columns)
+
         # 4. Inference
         # model.predict usually returns a numpy array or list
         predictions = model.predict(df)

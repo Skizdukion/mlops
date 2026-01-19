@@ -99,7 +99,7 @@
             "timeFrom": null,
             "timeRegions": [],
             "timeShift": null,
-            "title": "Data Drift",
+            "title": "Data Drift Share",
             "tooltip": {
                 "shared": true,
                 "sort": 0,
@@ -120,6 +120,115 @@
                     "logBase": 1,
                     "max": null,
                     "min": null,
+                    "show": true
+                },
+                {
+                    "format": "short",
+                    "label": null,
+                    "logBase": 1,
+                    "max": null,
+                    "min": null,
+                    "show": true
+                }
+            ],
+            "yaxis": {
+                "align": false,
+                "alignLevel": null
+            }
+        },
+        {
+            "aliasColors": {},
+            "bars": false,
+            "dashLength": 10,
+            "dashes": false,
+            "datasource": "PostgreSQL",
+            "fieldConfig": {
+                "defaults": {
+                    "custom": {},
+                    "links": []
+                },
+                "overrides": []
+            },
+            "fill": 0,
+            "fillGradient": 0,
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 8
+            },
+            "hiddenSeries": false,
+            "id": 3,
+            "legend": {
+                "avg": false,
+                "current": false,
+                "max": false,
+                "min": false,
+                "show": true,
+                "total": false,
+                "values": false
+            },
+            "lines": true,
+            "linewidth": 1,
+            "nullPointMode": "connected",
+            "options": {
+                "alertThreshold": true
+            },
+            "percentage": false,
+            "pluginVersion": "7.5.7",
+            "pointradius": 2,
+            "points": false,
+            "renderer": "flot",
+            "seriesOverrides": [],
+            "spaceLength": 10,
+            "stack": false,
+            "steppedLine": false,
+            "targets": [
+                {
+                    "format": "time_series",
+                    "group": [],
+                    "metricColumn": "none",
+                    "rawQuery": true,
+                    "rawSql": "SELECT\n  timestamp AS \"time\",\n  (drifted_columns -> 'prediction' ->> 'p_value')::float as prediction_p,\n  (drifted_columns -> 'target' ->> 'p_value')::float as target_p,\n  (drifted_columns -> 'passenger_count' ->> 'p_value')::float as passenger_count_p,\n  (drifted_columns -> 'pulocationid' ->> 'p_value')::float as pulocationid_p,\n  (drifted_columns -> 'dolocationid' ->> 'p_value')::float as dolocationid_p\nFROM data_drift_metrics\nWHERE model_type = '$model_type'\nORDER BY timestamp",
+                    "refId": "A"
+                }
+            ],
+            "thresholds": [
+                {
+                    "colorMode": "custom",
+                    "fill": true,
+                    "fillColor": "rgba(234, 11, 11, 0.2)",
+                    "line": true,
+                    "lineColor": "rgba(237, 46, 24, 1)",
+                    "op": "lt",
+                    "value": 0.05,
+                    "yaxis": "left"
+                }
+            ],
+            "timeFrom": null,
+            "timeRegions": [],
+            "timeShift": null,
+            "title": "Topic P-Values (Drift < 0.05)",
+            "tooltip": {
+                "shared": true,
+                "sort": 0,
+                "value_type": "individual"
+            },
+            "type": "graph",
+            "xaxis": {
+                "buckets": null,
+                "mode": "time",
+                "name": null,
+                "show": true,
+                "values": []
+            },
+            "yaxes": [
+                {
+                    "format": "short",
+                    "label": "p-value",
+                    "logBase": 1,
+                    "max": "1",
+                    "min": "0",
                     "show": true
                 },
                 {

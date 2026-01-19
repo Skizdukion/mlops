@@ -4,7 +4,7 @@ import logging
 
 from uuid import UUID
 from sqlmodel import create_engine, Session, SQLModel, select, desc
-from alembic_model.config import config
+from alembic_model.config import alembic_config
 from alembic_model.models.domain import Prediction, Feedback
 
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class Database:
     def __init__(self):
         """Initialize database connection with SQLModel."""
-        self.db_url = config.DATABASE_URL
+        self.db_url = alembic_config.DATABASE_URL
 
         # Create Engine with Connection Pooling
         self.engine = create_engine(
