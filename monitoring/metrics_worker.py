@@ -7,6 +7,8 @@ from sqlmodel import Session, create_engine, select
 from evidently import Report, DataDefinition, Regression, Dataset
 from evidently.presets import RegressionPreset
 
+from prefect.deployments import run_deployment
+
 # Add project root to sys.path
 project_root = Path(__file__).resolve().parents[1]
 sys.path.append(str(project_root))
@@ -24,10 +26,17 @@ def trigger_retraining_flow(model_type: str, reason: str):
     """Triggers the Prefect flow for retraining."""
     print(f"[TRIGGER] Triggering retraining for {model_type}. Reason: {reason}")
     try:
-        # In a real scenario, correct deployment name is required.
-        # Assuming parameters allow 'from_db' override.
-        # run_deployment(name=RETRAINING_DEPLOYMENT_NAME, parameters={"model_type": model_type, "from_db": True})
-        pass
+        run_deployment(
+            name=RETRAINING_DEPLOYMENT_NAME,
+            parameters={
+                "model_type": model_type,
+                "from_db": True,
+                "train_urls": [],  # Not used when from_db=True but required by flow signature if not optional
+                "test_urls": [],  # Not used when from_db=True
+            },
+            timeout=0,  # Fire and forget
+        )
+        print(f"[TRIGGER] Retraining triggered successfully for {model_type}")
     except Exception as e:
         print(f"Error triggering retraining: {e}")
 

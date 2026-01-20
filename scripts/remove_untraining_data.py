@@ -55,6 +55,8 @@ def remove_untraining_data():
                     if rows_affected == 0:
                         break
 
+                cur.execute("TRUNCATE TABLE monitoring_metrics CASCADE")
+
         print(f"Non-training data removed. Total: {total_deleted}")
     except Exception as e:
         print(f"Error removing data: {e}")
