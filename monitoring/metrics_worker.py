@@ -47,9 +47,9 @@ def load_data(model_type: str, window_size: str) -> pd.DataFrame:
     window_size can be: '100', '1d', '7d'
     """
     query = ""
-    if window_size == "100":
-        # Get last 100 rows
-        limit = 100
+    if window_size == "1000":
+        # Get last 1000 rows
+        limit = 1000
         query = f"""
             SELECT 
                 p.tpep_pickup_datetime, p.predicted_duration as prediction, f.duration as target, f.created_at
@@ -92,8 +92,8 @@ def load_data(model_type: str, window_size: str) -> pd.DataFrame:
         df = pd.read_sql(query, engine)
 
         # specific check for 100 window to ensure we have enough data
-        if window_size == "100" and len(df) < 100:
-            print(f"[{model_type} - {window_size}] Not enough data: {len(df)}/100")
+        if window_size == "1000" and len(df) < 1000:
+            print(f"[{model_type} - {window_size}] Not enough data: {len(df)}/1000")
             return pd.DataFrame()  # Return empty if not enough
 
         return df
@@ -196,24 +196,24 @@ def main():
     print("Metrics Worker started...")
 
     # Scheduling config
-    # 100 window -> Run every 10 mins
+    # 1000 window -> Run every 10 mins
     # 1d window -> Run every 15 mins (test mode) / 1 day (prod)
     # 7d window -> Run every 15 mins (test mode) / 7 days (prod)
 
     # We will use a simple counter or timestamp check in the loop
-    last_run = {"100": datetime.min, "1d": datetime.min, "7d": datetime.min}
+    last_run = {"1000": datetime.min, "1d": datetime.min, "7d": datetime.min}
 
     intervals = {
-        "100": 1 * 60,  # 1 minutes (Test mode) - normally 10 minutes
+        "1000": 1 * 60,  # 1 minutes (Test mode) - normally 10 minutes
         "1d": 15 * 60,  # 15 minutes (Test mode) - normally 24h
-        "7d": 15 * 60,  # 15 minutes (Test mode) - normally 7d
+        "7d": 30 * 60,  # 30 minutes (Test mode) - normally 7d
     }
 
     while True:
         now = datetime.utcnow()
         active_models = ["xgboost", "rf", "elastic"]  # Ideally fetch from DB
 
-        for window in ["100", "1d", "7d"]:
+        for window in ["1000", "1d", "7d"]:
             if (now - last_run[window]).total_seconds() >= intervals[window]:
                 print(f"--- Running {window} check ---")
                 for model in active_models:

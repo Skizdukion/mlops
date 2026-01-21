@@ -16,6 +16,7 @@ def clear_db():
                 cur.execute("TRUNCATE TABLE nyc_duration_feedback CASCADE")
                 cur.execute("TRUNCATE TABLE nyc_duration_inferences CASCADE")
                 cur.execute("TRUNCATE TABLE monitoring_metrics CASCADE")
+                cur.execute("TRUNCATE TABLE data_drift_metrics CASCADE")
                 conn.commit()
         print("Database cleared.")
     except Exception as e:

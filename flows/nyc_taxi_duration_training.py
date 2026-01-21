@@ -373,7 +373,7 @@ def nyc_taxi_pipeline(
         )
         registry.promote_to_production(model_name, version, "rmse")
 
-
+# Training pipeline
 if __name__ == "__main__":
     train_urls = [
         "https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2025-01.parquet",
@@ -403,3 +403,30 @@ if __name__ == "__main__":
         model_type="elastic",
         params_search=True,
     )
+
+# Retraining Test pipeline
+# if __name__ == "__main__":
+
+#     nyc_taxi_pipeline(
+#         train_urls=[],
+#         test_urls=[],
+#         model_type="elastic",
+#         params_search=True,
+#         from_db=True,
+#     )
+
+#     nyc_taxi_pipeline(
+#         train_urls=[],
+#         test_urls=[],
+#         model_type="elastic",
+#         params_search=False,
+#         from_db=True,
+#     )
+
+#     nyc_taxi_pipeline(
+#         train_urls=[],
+#         test_urls=[],
+#         model_type="rf",
+#         params_search=False,
+#         from_db=True,
+#     )
